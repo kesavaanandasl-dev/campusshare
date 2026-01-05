@@ -5,7 +5,6 @@ import '../chat/chat_screen.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final QueryDocumentSnapshot item;
-
   const ItemDetailScreen({super.key, required this.item});
 
   @override
@@ -13,12 +12,11 @@ class ItemDetailScreen extends StatefulWidget {
 }
 
 class _ItemDetailScreenState extends State<ItemDetailScreen> {
-  bool showOverview = true;
   bool openingChat = false;
 
   @override
   Widget build(BuildContext context) {
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final myUid = FirebaseAuth.instance.currentUser!.uid;
     final ownerUid = widget.item['ownerUid'];
     final itemId = widget.item.id;
 
@@ -27,234 +25,182 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // 🔝 Image section
+            // 🖼 IMAGE — ORIGINAL ASPECT RATIO
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
+              padding: const EdgeInsets.all(20),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  color: Colors.grey.shade100,
+                  child: AspectRatio(
+                    aspectRatio: 1, // fallback ratio
                     child: Image.network(
                       widget.item['imageUrl'],
-                      height: 240,
                       width: double.infinity,
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain, // ✅ NO CROPPING
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      },
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: Icon(
+                            Icons.broken_image,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  Positioned(
-                    top: 12,
-                    left: 12,
-                    child: _circleIcon(
-                      icon: Icons.arrow_back,
-                      onTap: () => Navigator.pop(context),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
 
-            // 📄 Content
             Expanded(
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+                padding: const EdgeInsets.all(22),
                 decoration: const BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(28),
-                    topRight: Radius.circular(28),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(28),
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Tabs
-                    Row(
-                      children: [
-                        _TabItem(
-                          title: "Overview",
-                          active: showOverview,
-                          onTap: () => setState(() => showOverview = true),
-                        ),
-                        const SizedBox(width: 24),
-                        _TabItem(
-                          title: "Details",
-                          active: !showOverview,
-                          onTap: () => setState(() => showOverview = false),
-                        ),
-                      ],
+                    // 🔹 OVERVIEW TITLE
+                    const Text(
+                      "Overview",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                    if (showOverview) ...[
-                      Text(
-                        'Title: "${widget.item['title']}"',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    // 🏷 TITLE
+                    Text(
+                      widget.item['title'],
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Category: "${widget.item['category']}"',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.deepPurple,
-                          fontWeight: FontWeight.w500,
-                        ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // 📂 CATEGORY
+                    Text(
+                      widget.item['category'],
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF7B2FF7),
+                        fontWeight: FontWeight.w500,
                       ),
-                    ] else ...[
-                      Text(
-                        widget.item['description'],
-                        style: const TextStyle(
-                          fontSize: 15,
-                          height: 1.6,
-                        ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // 📝 DESCRIPTION
+                    Text(
+                      widget.item['description'],
+                      style: const TextStyle(
+                        fontSize: 16,
+                        height: 1.4,
+                        color: Colors.black87,
                       ),
-                    ],
+                    ),
 
                     const Spacer(),
 
-                    // 💬 Chat Button
-                    if (currentUid != ownerUid)
+                    // 💬 CHAT BUTTON
+                    if (myUid != ownerUid)
                       SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: ElevatedButton(
-                          onPressed: openingChat
-                              ? null
-                              : () async {
-                                  setState(() => openingChat = true);
+  width: double.infinity,
+  height: 54,
+  child: ElevatedButton(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFF7B2FF7), // 💜 CampusShare purple
+      foregroundColor: Colors.white,             // text color
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+    ),
+    onPressed: openingChat
+        ? null
+        : () async {
+            setState(() => openingChat = true);
 
-                                  try {
-                                    final chatRef = FirebaseFirestore.instance
-                                        .collection('chats')
-                                        .doc(itemId);
+            final ids = [itemId, myUid, ownerUid]..sort();
+            final chatId = ids.join('_');
 
-                                    final doc = await chatRef.get();
+            final chatRef = FirebaseFirestore.instance
+                .collection('chats')
+                .doc(chatId);
 
-                                    if (!doc.exists) {
-                                      await chatRef.set({
-                                        'itemId': itemId,
-                                        'ownerUid': ownerUid,
-                                        'ownerName':
-                                            widget.item['ownerName'],
-                                        'createdAt':
-                                            FieldValue.serverTimestamp(),
-                                      });
-                                    }
+            final chatDoc = await chatRef.get();
 
-                                    if (!mounted) return;
+            if (!chatDoc.exists) {
+              final myUserSnap = await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(myUid)
+                  .get();
 
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => ChatScreen(
-                                          ownerName:
-                                              widget.item['ownerName'],
-                                          itemId: itemId,
-                                        ),
-                                      ),
-                                    );
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content:
-                                              Text("Error opening chat")),
-                                    );
-                                  } finally {
-                                    if (mounted) {
-                                      setState(() => openingChat = false);
-                                    }
-                                  }
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF7B2FF7),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                          child: openingChat
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
-                                )
-                              : const Text(
-                                  "Chat with Lender",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                        ),
-                      )
+              final myName = myUserSnap.data()?['name'] ?? 'Unknown';
+
+              await chatRef.set({
+                'itemId': itemId,
+                'itemTitle': widget.item['title'],
+                'ownerUid': ownerUid,
+                'participants': [myUid, ownerUid],
+                'participantNames': {
+                  myUid: myName,
+                  ownerUid: widget.item['ownerName'],
+                },
+                'lastMessage': 'Chat started',
+                'lastMessageAt': FieldValue.serverTimestamp(),
+                'lastSenderId': myUid,
+              });
+            }
+
+            if (!mounted) return;
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChatScreen(
+                  chatId: chatId,
+                  peerName: widget.item['ownerName'],
+                ),
+              ),
+            );
+
+            setState(() => openingChat = false);
+          },
+    child: const Text(
+      "Chat with Lender",
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  ),
+)
+
                     else
-                      const Center(
-                        child: Text(
-                          "This is your item",
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
+                      const Center(child: Text("This is your item")),
                   ],
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _circleIcon({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, size: 20),
-      ),
-    );
-  }
-}
-
-class _TabItem extends StatelessWidget {
-  final String title;
-  final bool active;
-  final VoidCallback onTap;
-
-  const _TabItem({
-    required this.title,
-    required this.active,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: active ? FontWeight.bold : FontWeight.w500,
-            ),
-          ),
-          if (active)
-            Container(
-              margin: const EdgeInsets.only(top: 6),
-              height: 3,
-              width: 26,
-              color: const Color(0xFF7B2FF7),
-            ),
-        ],
       ),
     );
   }

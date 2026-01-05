@@ -21,7 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> register() async {
     final email = emailController.text.trim().toLowerCase();
 
-    // ✅ REQUIRED: name must not be empty
+    // ✅ Name validation
     if (nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter your full name")),
@@ -29,6 +29,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    // ✅ University email validation
     if (!email.endsWith("@svce.edu.in")) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Use your university email")),
@@ -47,7 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       final uid = userCredential.user!.uid;
 
-      // ✅ Save user profile (used later for ownerName)
+      // ✅ Save user profile
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'uid': uid,
         'name': nameController.text.trim(),
@@ -59,10 +60,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      Navigator.pop(context); // AuthGate handles next screen
+      Navigator.pop(context); // AuthGate handles navigation
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
     } finally {
       setState(() => isLoading = false);
     }
@@ -108,6 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
 
                 const SizedBox(height: 14),
+
                 const Text(
                   "CampusShare",
                   style: TextStyle(
@@ -140,7 +143,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   passwordController,
                   obscure: true,
                 ),
-
                 const SizedBox(height: 22),
 
                 Padding(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -6,214 +7,182 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final uid = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F2FB),
+      backgroundColor: const Color(0xFFF5F6FA),
       body: Column(
         children: [
-          // 🔝 TOP CURVED HEADER
-          Stack(
-            children: [
-              Container(
-                height: 260,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF7B2FF7),
-                      Color(0xFF9D4EDD),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+          // 🔮 BIG PURPLE HEADER (OLD UI STYLE)
+          Container(
+            height: 240,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF7B2FF7), Color(0xFF5B1BD8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(40),
+              ),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircleAvatar(
+                    radius: 42,
+                    backgroundImage:
+                        AssetImage('assets/profile_placeholder.png'),
                   ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(40),
-                    bottomRight: Radius.circular(40),
+                  const SizedBox(height: 12),
+                  FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(uid)
+                        .get(),
+                    builder: (context, snapshot) {
+                      final name = snapshot.hasData
+                          ? (snapshot.data!.data() as Map<String, dynamic>)['name']
+                          : '';
+
+                      return Column(
+                        children: [
+                          Text(
+                            name ?? '',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'CampusShare User',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                ),
+
+                ],
               ),
-
-              // Menu icon
-              Positioned(
-                top: 40,
-                left: 16,
-                child: Icon(
-                  Icons.menu,
-                  color: Colors.white,
-                ),
-              ),
-
-              // Profile content
-              Positioned.fill(
-                top: 70,
-                child: Column(
-                  children: [
-                    // Profile image
-                    CircleAvatar(
-                      radius: 46,
-                      backgroundColor: Colors.white,
-                      child: CircleAvatar(
-                        radius: 42,
-                        backgroundImage: const AssetImage(
-                          'assets/profile_placeholder.png',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Name
-                    Text(
-                      user?.email?.split('@')[0] ?? "CampusShare User",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    const Text(
-                      "CampusShare User",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // 📊 STATS (2 COLUMN)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                _statCard("Lent", "12"),
-                const SizedBox(width: 16),
-                _statCard("Borrowed", "5"),
-              ],
             ),
           ),
 
           const SizedBox(height: 24),
 
-          // 📋 MENU LIST
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  _menuItem(Icons.person_outline, "My Profile"),
-                  _menuItem(Icons.message_outlined, "Messages", badge: "7"),
-                  _menuItem(Icons.favorite_border, "Favourites"),
-                  _menuItem(Icons.location_on_outlined, "Location"),
-                  _menuItem(Icons.settings_outlined, "Settings"),
-
-                  const Spacer(),
-
-                  // 🚪 LOGOUT
-                  TextButton.icon(
-                    onPressed: () async {
-                      await FirebaseAuth.instance.signOut();
-                    },
-                    icon: const Icon(Icons.logout, color: Colors.grey),
-                    label: const Text(
-                      "Logout",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 🔢 STAT CARD
-  Widget _statCard(String title, String value) {
-    return Expanded(
-      child: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF7B2FF7),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 📌 MENU ITEM
-  Widget _menuItem(IconData icon, String title, {String? badge}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey.shade700),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 15),
-            ),
-          ),
-          if (badge != null)
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.purple,
-                borderRadius: BorderRadius.circular(12),
-              ),
+          // 🧾 MY POSTS TITLE
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Align(
+              alignment: Alignment.centerLeft,
               child: Text(
-                badge,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
+                'My Posts',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // 📦 MY POSTS LIST
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('items')
+                  .where('ownerUid', isEqualTo: uid) // ⚠️ MUST MATCH YOUR ITEM FIELD
+                  .snapshots(),
+              builder: (context, snapshot) {
+                // Loading
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+
+                // No data
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No posts yet',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  );
+                }
+
+                final items = snapshot.data!.docs;
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final doc = items[index];
+
+                    return Card(
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: ListTile(
+                        title: Text(doc['title']),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            await FirebaseFirestore.instance
+                                .collection('items')
+                                .doc(doc.id)
+                                .delete();
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+
+          // 🚪 LOGOUT
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+              child: SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          ),
         ],
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../home/home_screen.dart';
 import '../post/post_item_screen.dart';
 import '../profile/profile_screen.dart';
+import '../chat/messages_screen.dart'; // your messages tab
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -17,13 +18,12 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget build(BuildContext context) {
     final screens = [
       const HomeScreen(),
-      const PlaceholderScreen(title: 'Search'),
       PostItemScreen(
         onPostSuccess: () {
-          setState(() => currentIndex = 0); // ✅ go Home
+          setState(() => currentIndex = 0); // go back to Home after posting
         },
       ),
-      const PlaceholderScreen(title: 'Messages'),
+      const MessagesScreen(),
       const ProfileScreen(),
     ];
 
@@ -38,23 +38,24 @@ class _MainNavigationState extends State<MainNavigation> {
           setState(() => currentIndex = index);
         },
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.search), label: 'Search'),
-          NavigationDestination(icon: Icon(Icons.add_circle), label: 'Add'),
-          NavigationDestination(icon: Icon(Icons.message), label: 'Messages'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.add_circle_outline),
+            label: 'Post',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.message),
+            label: 'Messages',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
       ),
     );
-  }
-}
-
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const PlaceholderScreen({super.key, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text("$title (Coming Soon)"));
   }
 }

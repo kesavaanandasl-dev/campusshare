@@ -103,6 +103,12 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
+  fonts:
+  - family: Pacifico
+    fonts:
+      - asset: assets/fonts/Pacifico-Regular.ttf
+
+
 flutter_native_splash:
   color: "#2C144B"
   image: assets/splash_icon.png
