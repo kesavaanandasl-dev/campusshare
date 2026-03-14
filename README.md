@@ -17,7 +17,7 @@ App facilitates discovery and exchange — no involvement in returns.</h3>
 </strong> </p>
         <p><strong>Team Leader: T.Venkatesh
 </strong> </p>
-        <p><strong>Team Members: <br> ● S.L Kesavanada<br>
+        <p><strong>Team Members: <br> ● S.L Kesavaananda<br>
 ● T. Chasanth Reddy<br>
 ● K. Charith<br>
 </strong> </p>
